@@ -77,6 +77,8 @@ fi
 if [ -n "${BITBUCKET_TAG}" ]; then
   if [ "${relay_type}" = "mirror" ]; then
     /opt/ci-tools/git-relay/git-relay.sh mirror tag -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --tag-name=${BITBUCKET_TAG}
+  elif [ "${relay_type}" = "snapshot" ]; then
+    /opt/ci-tools/git-relay/git-relay.sh snapshot tag -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --tag-name=${BITBUCKET_TAG}
   else
     echo "Relay type '${relay_type}' not recognised"
     exit 1
@@ -96,6 +98,8 @@ if [ -n "${BITBUCKET_BRANCH}" ]; then
   set -e
   if [ "${relay_type}" = "mirror" ]; then
     /opt/ci-tools/git-relay/git-relay.sh mirror -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --dest-repo-branch=${target_branch}
+  elif [ "${relay_type}" = "snapshot" ]; then
+    /opt/ci-tools/git-relay/git-relay.sh snapshot -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --dest-repo-branch=${target_branch}
   else
     echo "Relay type '${relay_type}' not recognised"
     exit 1
