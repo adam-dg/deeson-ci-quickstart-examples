@@ -8,9 +8,11 @@ pipelines:
   default:
     - step:
         script:
+          - make test
           - make deploy
   tags:
     '*':
       - step:
           script:
+            - make test
             - make deploy
