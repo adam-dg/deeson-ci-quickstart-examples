@@ -100,6 +100,8 @@ if [ -n "${BITBUCKET_BRANCH}" ]; then
     /opt/ci-tools/git-relay/git-relay.sh mirror -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --dest-repo-branch=${target_branch}
   elif [ "${relay_type}" = "snapshot" ]; then
     /opt/ci-tools/git-relay/git-relay.sh snapshot -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --dest-repo-branch=${target_branch}
+  elif [ "${relay_type}" = "subtree-snapshot" ]; then
+    /opt/ci-tools/git-relay/git-relay.sh subtree-snapshot -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --dest-repo-branch=${target_branch}
   else
     echo "Relay type '${relay_type}' not recognised"
     exit 1
