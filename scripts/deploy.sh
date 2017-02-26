@@ -93,7 +93,10 @@ if [ -n "${BITBUCKET_BRANCH}" ]; then
   dm_exit_status=$?
 
   if [ ${dm_exit_status} != 0 ]; then
-    ${target_branch}
+    echo ${target_branch}
+    if [ ${dm_exit_status} == 10 ] || [ ${dm_exit_status} == 11 ]; then
+      exit 0
+    fi
     exit 1
   fi
 
