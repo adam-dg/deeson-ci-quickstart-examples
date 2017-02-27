@@ -43,22 +43,16 @@ cd /opt/ci-tools && git clone git@bitbucket.org:deesongroup6346/git-relay.git
 #ls -lA /opt/ci-tools/git-relay
 
 
-#
-# Configiure the deployment SSH keys
-#
-
-/opt/ci-tools/pipeline-ci-tools/configure-keys.sh --key=${DEPLOY_PRIVATE_KEY} --key-file=${DEPLOY_KEYFILE} --host=${DEPLOY_HOST}
-
-
-#
-# Relay commit to deployment repo
-#
-
 deploy_url=""
 if [ "${GIT_RELAY_DEST_REPO_URL}" != "" ]; then
   deploy_url="${GIT_RELAY_DEST_REPO_URL}"
 elif [ "${DEPLOY_URL}" != "" ]; then
   deploy_url="${DEPLOY_URL}"
+fi
+
+deploy_keyfile="deploy_id_rsa"
+if [ "${DEPLOY_KEYFILE}" != "" ]; then
+  deploy_keyfile="${DEPLOY_KEYFILE}"
 fi
 
 src_repo_path=""
@@ -73,14 +67,36 @@ if [ "${GIT_RELAY_TYPE}" != "" ]; then
   relay_type="${GIT_RELAY_TYPE}"
 fi
 
+git_username="Jenkins Deeson"
+if [ "${GIT_RELAY_GIT_USERNAME}" != "" ]; then
+  git_username="${GIT_RELAY_GIT_USERNAME}"
+fi
+
+git_email="jenkins@deeson.co.uk"
+if [ "${GIT_RELAY_GIT_EMAIL}" != "" ]; then
+  git_email="${GIT_RELAY_GIT_EMAIL}"
+fi
+
+
+#
+# Configiure the deployment SSH keys
+#
+
+/opt/ci-tools/pipeline-ci-tools/configure-keys.sh --key=${DEPLOY_PRIVATE_KEY} --key-file=${deploy_keyfile} --host=${DEPLOY_HOST}
+
+
+#
+# Relay commit to deployment repo
+#
+
 # If there is a tag, push it up.
 if [ -n "${BITBUCKET_TAG}" ]; then
   if [ "${relay_type}" = "mirror" ]; then
-    /opt/ci-tools/git-relay/git-relay.sh mirror tag -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --tag-name=${BITBUCKET_TAG}
+    /opt/ci-tools/git-relay/git-relay.sh mirror tag -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --tag-name=${BITBUCKET_TAG} --git-username=${git_username} --git-email=${git_email}
   elif [ "${relay_type}" = "snapshot" ]; then
-    /opt/ci-tools/git-relay/git-relay.sh snapshot tag -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --tag-name=${BITBUCKET_TAG}
+    /opt/ci-tools/git-relay/git-relay.sh snapshot tag -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --tag-name=${BITBUCKET_TAG} --git-username=${git_username} --git-email=${git_email}
   elif [ "${relay_type}" = "subtree-snapshot" ]; then
-    /opt/ci-tools/git-relay/git-relay.sh subtree-snapshot tag -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --tag-name=${BITBUCKET_TAG}
+    /opt/ci-tools/git-relay/git-relay.sh subtree-snapshot tag -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --tag-name=${BITBUCKET_TAG} --git-username=${git_username} --git-email=${git_email}
   else
     echo "Relay type '${relay_type}' not recognised"
     exit 1
@@ -102,11 +118,11 @@ if [ -n "${BITBUCKET_BRANCH}" ]; then
 
   set -e
   if [ "${relay_type}" = "mirror" ]; then
-    /opt/ci-tools/git-relay/git-relay.sh mirror -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --dest-repo-branch=${target_branch}
+    /opt/ci-tools/git-relay/git-relay.sh mirror -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --dest-repo-branch=${target_branch} --git-username=${git_username} --git-email=${git_email}
   elif [ "${relay_type}" = "snapshot" ]; then
-    /opt/ci-tools/git-relay/git-relay.sh snapshot -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --dest-repo-branch=${target_branch}
+    /opt/ci-tools/git-relay/git-relay.sh snapshot -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --dest-repo-branch=${target_branch} --git-username=${git_username} --git-email=${git_email}
   elif [ "${relay_type}" = "subtree-snapshot" ]; then
-    /opt/ci-tools/git-relay/git-relay.sh subtree-snapshot -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --dest-repo-branch=${target_branch}
+    /opt/ci-tools/git-relay/git-relay.sh subtree-snapshot -- --src-repo-path="${src_repo_path}" --dest-repo-url="${deploy_url}" --dest-repo-branch=${target_branch} --git-username=${git_username} --git-email=${git_email}
   else
     echo "Relay type '${relay_type}' not recognised"
     exit 1
