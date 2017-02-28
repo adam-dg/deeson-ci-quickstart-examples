@@ -5,11 +5,12 @@ clone:
   depth: full
 
 pipelines:
-  default:
-    - step:
-        script:
-          - make test
-          - make deploy
+  branches:
+    master:
+      - step:
+          script:
+            - make test
+            - make deploy
   tags:
     '*':
       - step:
