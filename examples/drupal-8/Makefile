@@ -152,7 +152,7 @@ drupal-update: check-env build-drupal
 #
 
 # Relay to hosting platform provided Git repository
-deploy:
+deploy: build-deploy
 	/opt/ci-tools/deployer.sh
 
 
@@ -175,3 +175,6 @@ check-env:
 #
 # Note: Do not forget to precede the target definition with a comment explaining what it does!
 #
+
+build-deploy:
+	./scripts/make/build-deploy.sh

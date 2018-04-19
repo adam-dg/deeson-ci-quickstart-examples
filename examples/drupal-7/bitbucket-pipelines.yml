@@ -1,0 +1,103 @@
+# We only need the current commit.
+clone:
+  depth: full
+
+pipelines:
+  branches:
+    master:
+      - step:
+          name: Build Drupal
+          image: wodby/drupal-php:7.1-2.4.3
+          script:
+            - ./scripts/make/build-drupal.sh
+          artifacts:
+            - '**'
+      - step:
+          name: Build Front-End
+          image: deeson/fe-node
+          caches:
+            - node
+          script:
+            - cd frontend && npm install && ./node_modules/.bin/grunt build
+          artifacts:
+            - '**'
+      - step:
+          name: Relay
+          image: deeson/deployer
+          script:
+            - make deploy
+          artifacts:
+            - '**'
+    develop:
+      - step:
+          name: Build Drupal
+          image: wodby/drupal-php:7.1-2.4.3
+          script:
+            - ./scripts/make/build-drupal.sh
+          artifacts:
+            - '**'
+      - step:
+          name: Build Front-End
+          image: deeson/fe-node
+          caches:
+            - node
+          script:
+            - cd frontend && npm install && ./node_modules/.bin/grunt build
+          artifacts:
+            - '**'
+      - step:
+          name: Relay
+          image: deeson/deployer
+          script:
+            - make deploy
+          artifacts:
+            - '**'
+    UAT:
+      - step:
+          name: Build Drupal
+          image: wodby/drupal-php:7.1-2.4.3
+          script:
+            - ./scripts/make/build-drupal.sh
+          artifacts:
+            - '**'
+      - step:
+          name: Build Front-End
+          image: deeson/fe-node
+          caches:
+            - node
+          script:
+            - cd frontend && npm install && ./node_modules/.bin/grunt build
+          artifacts:
+            - '**'
+      - step:
+          name: Relay
+          image: deeson/deployer
+          script:
+            - make deploy
+          artifacts:
+            - '**'
+  tags:
+    '*':
+      - step:
+          name: Build Drupal
+          image: wodby/drupal-php:7.1-2.4.3
+          script:
+            - ./scripts/make/build-drupal.sh
+          artifacts:
+            - '**'
+      - step:
+          name: Build Front-End
+          image: deeson/fe-node
+          caches:
+            - node
+          script:
+            - cd frontend && npm install && ./node_modules/.bin/grunt build
+          artifacts:
+            - '**'
+      - step:
+          name: Relay
+          image: deeson/deployer
+          script:
+            - make deploy
+          artifacts:
+            - '**'

@@ -6,17 +6,18 @@ cd "$script_path"
 cd ../..
 repo_root=$(pwd)
 
-# To install dependencies managed by Composer or Drush Make uncomment
+# Uncomment to install dependencies managed by Composer or Drush Make
+# Remember to match the wodby/drupal-php container image version to what is in your docker-compose.yml
 #docker run -ti -v $repo_root:/var/www/html -w /var/www/html wodby/drupal-php:7.1-2.4.3 /bin/bash -c './scripts/make/build-drupal.sh'
 
 #if [ $? -ne 0 ] ; then
 #  exit $?
 #fi
 
-# To have Grunt compile front-end assets uncomment
+# Uncomment to have Grunt compile front-end assets
 #docker run -ti -v $repo_root/frontend:/app -w /app deeson/fe-node /bin/bash -c 'npm install && ./node_modules/.bin/grunt build'
 
-# To have Yarn compile front-end assets uncomment
+# Uncomment to have Yarn compile front-end assets
 #docker run -ti -v $repo_root/frontend:/app -w /app deeson/fe-node /bin/bash -c 'yarn install && yarn build'
 
 #if [ $? -ne 0 ] ; then
