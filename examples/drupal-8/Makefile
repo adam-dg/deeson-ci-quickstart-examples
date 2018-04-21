@@ -116,7 +116,7 @@ deploy: pre-deploy
 
 #
 pre-deploy:
-	./scripts/make/build-deploy.sh
+	./scripts/make/pre-deploy.sh
 
 # Do stuff to Drupal now it's in a live environment.
 post-deploy:
