@@ -13,15 +13,10 @@ services:
     volumes:
 #      - ./mariadb-init:/docker-entrypoint-initdb.d # Place init .sql file(s) here.
       - ./.persist/mysql:/var/lib/mysql # I want to manage volumes manually.
-    labels:
-      - 'traefik.backend=mariadb'
-      - 'traefik.port=3306'
-      - 'traefik.frontend.rule=Host:localhost'
-
 
   php:
 # 2. Images without Drupal – wodby/drupal-php:[PHP_VERSION]-[STABILITY_TAG].
-    image: wodby/drupal-php:7.1-2.4.3
+    image: wodby/drupal-php:7.1-2.4.5
 #    image: wodby/drupal-php:7.0-2.1.0
 #    image: wodby/drupal-php:5.6-2.1.0
 #    image: wodby/drupal-php:5.3-2.1.0

@@ -7,7 +7,7 @@ pipelines:
     master:
       - step:
           name: Build Drupal
-          image: wodby/drupal-php:7.1-2.4.3
+          image: wodby/drupal-php:7.1-2.4.5
           script:
             - ./scripts/make/build-drupal.sh
           artifacts:
@@ -31,7 +31,7 @@ pipelines:
     develop:
       - step:
           name: Build Drupal
-          image: wodby/drupal-php:7.1-2.4.3
+          image: wodby/drupal-php:7.1-2.4.5
           script:
             - ./scripts/make/build-drupal.sh
           artifacts:
@@ -55,7 +55,7 @@ pipelines:
     UAT:
       - step:
           name: Build Drupal
-          image: wodby/drupal-php:7.1-2.4.3
+          image: wodby/drupal-php:7.1-2.4.5
           script:
             - ./scripts/make/build-drupal.sh
           artifacts:
@@ -80,7 +80,7 @@ pipelines:
     '*':
       - step:
           name: Build Drupal
-          image: wodby/drupal-php:7.1-2.4.3
+          image: wodby/drupal-php:7.1-2.4.5
           script:
             - ./scripts/make/build-drupal.sh
           artifacts:

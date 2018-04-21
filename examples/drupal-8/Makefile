@@ -1,7 +1,10 @@
-ENVIRONMENT=vdd
-DRUSH_ARGS= -y --nocolor
-HOST=php
-COMMAND=/bin/bash
+ROOT_DIR=${PWD}
+RUN_DESTRUCTIVE?=false
+ENVIRONMENT?=docker
+DRUSH_ARGS?=-y --nocolor
+DRUSH_CMD?=${ROOT_DIR}/vendor/bin/drush @$(ENVIRONMENT)
+DRUSH?=${DRUSH_CMD} $(DRUSH_ARGS)
+COMPOSER?=$(shell command -v composer 2> /dev/null)
 
 
 
@@ -12,17 +15,20 @@ COMMAND=/bin/bash
 # Start Docker Compose services and perform build steps
 docker-start: docker-up
 docker-up: build-docker docker-local-ssl
+	@echo Bringing docker containers up
 	docker-compose up -d
 	docker-compose ps
 
 # Start Docker Compose services but assume build has already taken place
 docker-start-quick: docker-local-ssl
+	@echo Bringing docker containers up
 	docker-compose up -d
 	docker-compose ps
 
 # Stop docker
 docker-stop: docker-down
 docker-down:
+	@echo Bringing docker containers down
 	docker-compose down --remove-orphans
 
 # Restart docker
@@ -64,20 +70,11 @@ clean: clean-drupal clean-node
 
 # Remove NodeJS modules required by front-end
 clean-node:
-	rm -rf frontend/node_modules
+	rm -rf src/frontend/node_modules
 
 # Remove all front-end build artefacts including NodeJS modules
 clean-frontend: clean-node
-	unlink frontend/assets/js/min/plugins.min.js
-	unlink frontend/assets/js/min/app.min.js
-	unlink frontend/assets/css/abc-brand/base/abc-fonts.css
-	unlink frontend/assets/css/abc-brand.css
-	unlink frontend/assets/css/fonts.css
-	unlink frontend/assets/css/print-styles-seven-theme.css
-	unlink frontend/assets/css/stage_overrides.css
-	unlink frontend/assets/css/style.css
-	unlink frontend/assets/css/theme-overrides.css
-	unlink frontend/assets/css/wireframe.css
+	rm -Rf src/frontend/assets
 
 # Remove dependencies managed by Composer
 clean-composer:
@@ -85,65 +82,13 @@ clean-composer:
 
 # Remove Drupal dependencies managed by Drush Make including Composer dependencies
 clean-drupal: clean-composer
-	rm -rf docroot/includes
-	rm -rf docroot/misc
-	rm -rf docroot/modules
-	rm -rf docroot/profiles
-	rm -rf docroot/scripts
-	rm -rf docroot/themes
-	rm -rf docroot/.htaccess
-	rm -rf docroot/.editorconfig
-	rm -rf docroot/.gitignore
-	rm -rf docroot/authorize.php
-	rm -rf docroot/CHANGELOG.txt
-	rm -rf docroot/COPYRIGHT.txt
-	rm -rf docroot/cron.php
-	rm -rf docroot/index.php
-	rm -rf docroot/INSTALL.mysql.txt
-	rm -rf docroot/INSTALL.pgsql.txt
-	rm -rf docroot/install.php
-	rm -rf docroot/INSTALL.sqlite.txt
-	rm -rf docroot/INSTALL.txt
-	rm -rf docroot/LICENSE.txt
-	rm -rf docroot/MAINTAINERS.txt
-	rm -rf docroot/PATCHES.txt
-	rm -rf docroot/README.txt
-	rm -rf docroot/robots.txt
-	rm -rf docroot/update.php
-	rm -rf docroot/UPGRADE.txt
-	rm -rf docroot/web.config
-	rm -rf docroot/xmlrpc.php
-	rm -rf docroot/pantheon.upstream.yml
-	rm -rf docroot/*.patch
-	rm -rf docroot/sites/example.sites.php
-	rm -rf docroot/sites/README.txt
-	rm -rf docroot/sites/default/default.settings.php
-	rm -rf docroot/sites/all/libraries/README.txt
-	rm -rf docroot/sites/all/modules/contrib
-	rm -rf docroot/sites/all/modules/README.txt
-	rm -rf docroot/sites/all/themes/contrib
-	rm -rf docroot/sites/all/themes/README.txt
+	rm -Rf docroot web
 
 
 
 #
 # Targets for Drush orchestration
 #
-
-drush-make-recreate: check-env
-	cd docroot && \
-	  ../vendor/bin/drush @$(ENVIRONMENT) $(DRUSH_ARGS) make-generate ../drush-make.lock.ini
-
-drush-make-apply-patch:
-	cd docroot && \
-	  ../vendor/bin/drush $(DRUSH_ARGS) make --no-core --projects=$(MODULES) ../drush-make.yml
-
-drupal-update: check-env build-drupal
-	cd docroot && \
-	  ../vendor/bin/drush @$(ENVIRONMENT) $(DRUSH_ARGS) cc drush && \
-	  ../vendor/bin/drush @$(ENVIRONMENT) $(DRUSH_ARGS) master-execute --no-cache-clear && \
-	  ../vendor/bin/drush @$(ENVIRONMENT) $(DRUSH_ARGS) updb && \
-	  ../vendor/bin/drush @$(ENVIRONMENT) $(DRUSH_ARGS) fra
 
 
 
@@ -152,7 +97,7 @@ drupal-update: check-env build-drupal
 #
 
 # Relay to hosting platform provided Git repository
-deploy: build-deploy
+deploy: pre-deploy
 	/opt/ci-tools/deployer.sh
 
 
@@ -160,13 +105,6 @@ deploy: build-deploy
 #
 # Targets for utility functions
 #
-
-# Need to check if the user specified the ENVIRONMENT arg where appropriate.
-check-env:
-	@if test "$(ENVIRONMENT)" = "" ; then \
-	    echo "ENVIRONMENT is undefined. Usage: make [command] ENVIRONMENT=[vddp|vddm]"; \
-	    exit 1; \
-	fi
 
 
 
@@ -176,5 +114,14 @@ check-env:
 # Note: Do not forget to precede the target definition with a comment explaining what it does!
 #
 
-build-deploy:
+#
+pre-deploy:
 	./scripts/make/build-deploy.sh
+
+# Do stuff to Drupal now it's in a live environment.
+post-deploy:
+	# No master yet :-( .
+	cd docroot && $(DRUSH) cim sync
+	cd docroot && $(DRUSH) updb
+	cd docroot && $(DRUSH) cr
+	cd docroot && $(DRUSH) cc css-js

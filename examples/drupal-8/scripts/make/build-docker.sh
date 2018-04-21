@@ -8,7 +8,7 @@ repo_root=$(pwd)
 
 # Uncomment to install dependencies managed by Composer
 # Remember to match the wodby/drupal-php container image version to what is in your docker-compose.yml
-#docker run -ti -v $repo_root:/var/www/html -w /var/www/html wodby/drupal-php:7.1-2.4.5 /bin/bash -c './scripts/make/build-drupal.sh'
+docker run -ti -v $repo_root:/var/www/html -w /var/www/html wodby/drupal-php:7.1-2.4.5 /bin/bash -c './scripts/make/build-drupal.sh'
 
 #if [ $? -ne 0 ] ; then
 #  exit $?

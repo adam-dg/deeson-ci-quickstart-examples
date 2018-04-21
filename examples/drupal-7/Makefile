@@ -12,11 +12,13 @@ COMMAND=/bin/bash
 # Start Docker Compose services and perform build steps
 docker-start: docker-up
 docker-up: build-docker docker-local-ssl
+	@echo Bringing docker containers up
 	docker-compose up -d
 	docker-compose ps
 
 # Start Docker Compose services but assume build has already taken place
 docker-start-quick: docker-local-ssl
+	@echo Bringing docker containers up
 	docker-compose up -d
 	docker-compose ps
 
