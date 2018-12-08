@@ -1,10 +1,42 @@
-ROOT_DIR=${PWD}
-RUN_DESTRUCTIVE?=false
 ENVIRONMENT?=docker
 DRUSH_ARGS?=-y --nocolor
-DRUSH_CMD?=${ROOT_DIR}/vendor/bin/drush @$(ENVIRONMENT)
-DRUSH?=${DRUSH_CMD} $(DRUSH_ARGS)
-COMPOSER?=$(shell command -v composer 2> /dev/null)
+HOST=php
+SOLR_HOST=solr
+COMMAND=/bin/bash
+
+
+#
+# Key targets
+#
+
+# Shortcut for make install, make build and make start
+default: install build start
+
+# Install dependencies
+install:
+	./scripts/make/install.sh
+
+# Build all static assets
+build:
+	./scripts/make/build.sh
+
+# Start Docker Compose services but assume dependencies and build has already taken place
+start:
+	@echo Bringing docker containers up
+	docker-compose up -d
+	docker-compose ps
+
+# Run all tests
+test:
+	./scripts/make/test.sh
+
+# Update Drupal
+update:
+	./scripts/make/update.sh ${ENVIRONMENT} ${DRUSH_ARGS}
+
+# Set the alias required by Xdebug
+xdebug:
+	sudo ifconfig lo0 alias 10.254.254.25
 
 
 
@@ -12,38 +44,17 @@ COMPOSER?=$(shell command -v composer 2> /dev/null)
 # Targets for interacting with Docker Compose
 #
 
-# Start Docker Compose services and perform build steps
-docker-start: docker-up
-docker-up: build-docker docker-local-ssl
-	@echo Bringing docker containers up
-	docker-compose up -d
-	docker-compose ps
-
-# Start Docker Compose services but assume build has already taken place
-docker-start-quick: docker-local-ssl
-	@echo Bringing docker containers up
-	docker-compose up -d
-	docker-compose ps
-
 # Stop docker
-docker-stop: docker-down
-docker-down:
-	@echo Bringing docker containers down
+stop:
 	docker-compose down --remove-orphans
 
 # Restart docker
-docker-restart: docker-stop docker-start
-
-# Create a self-signed certificate for HTTPS
-docker-local-ssl: .persist/certs/local.key .persist/certs/local.crt
-.persist/certs/local.%:
-	mkdir -p ./.persist/certs
-	./scripts/make/genlocalcrt.sh ./.persist/certs
+restart: stop start
 
 # Connect to the shell on a docker host, defaults to HOST=php COMMAND=/bin/bash
-# Usage: make docker-shell HOST=[container name] COMMAND=[command]
-docker-shell:
-	docker exec -i -t `docker ps | grep $(HOST)_1 | cut -d' ' -f 1` $(COMMAND)
+# Usage: make shell HOST=[service name] COMMAND=[command]
+shell:
+	docker-compose exec $(HOST) $(COMMAND)
 
 
 
@@ -51,13 +62,13 @@ docker-shell:
 # Targets for orchestrating project build
 #
 
-# Build Drupal and front-end using Docker containers
-build-docker:
-	./scripts/make/build-docker.sh
+# Initialise Apache Solr core in service container for Apache Solr (without Search API).
+build-solr:
+	make shell HOST=$(SOLR_HOST) COMMAND='make core=core1 config_set=apachesolr -f /usr/local/bin/actions.mk'
 
-# Initialise Apache Solr core in service container
-build-docker-solr:
-	make docker-shell HOST=solr COMMAND='make core=core1 -f /usr/local/bin/actions.mk'
+# Initialise Apache Solr core in service container for Apache Solr (via Search API).
+build-searchapi-solr:
+	make shell HOST=$(SOLR_HOST) COMMAND='make core=core1 -f /usr/local/bin/actions.mk'
 
 
 
@@ -66,29 +77,23 @@ build-docker-solr:
 #
 
 # Remove everything that's re-buildable. Running make build will reverse this.
-clean: clean-drupal clean-node
+clean: clean-drupal clean-frontend
 
 # Remove NodeJS modules required by front-end
 clean-node:
-	rm -rf src/frontend/node_modules
+	./scripts/make/clean-node.sh
 
 # Remove all front-end build artefacts including NodeJS modules
 clean-frontend: clean-node
-	rm -Rf src/frontend/assets
+	./scripts/make/clean-frontend.sh
 
 # Remove dependencies managed by Composer
 clean-composer:
-	rm -rf vendor bin
+	./scripts/make/clean-composer.sh
 
 # Remove Drupal dependencies managed by Drush Make including Composer dependencies
 clean-drupal: clean-composer
-	rm -Rf docroot web
-
-
-
-#
-# Targets for Drush orchestration
-#
+	./scripts/make/clean-drupal.sh
 
 
 
@@ -96,15 +101,17 @@ clean-drupal: clean-composer
 # Targets for Bitbucket Pipelines
 #
 
-# Relay to hosting platform provided Git repository
-deploy: pre-deploy
+# Build Drupal under Pipelnes.
+pipelines-build-drupal:
+	./scripts/make/install-drupal.sh
+
+# Build the frontend resources and copy them into the docroot under Pipelines
+pipelines-build-frontend:
+	./scripts/make/build-frontend.sh
+
+# Relay to hosting platform provided Git repository under Pipelines.
+pipelines-deploy:
 	/opt/ci-tools/deployer.sh
-
-
-
-#
-# Targets for utility functions
-#
 
 
 
@@ -113,15 +120,3 @@ deploy: pre-deploy
 #
 # Note: Do not forget to precede the target definition with a comment explaining what it does!
 #
-
-#
-pre-deploy:
-	./scripts/make/pre-deploy.sh
-
-# Do stuff to Drupal now it's in a live environment.
-post-deploy:
-	# No master yet :-( .
-	cd docroot && $(DRUSH) cim sync
-	cd docroot && $(DRUSH) updb
-	cd docroot && $(DRUSH) cr
-	cd docroot && $(DRUSH) cc css-js
